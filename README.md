@@ -10,28 +10,17 @@ it is expected that the imported class was defined correctly, in another file, a
   1. [Single Responsibility](#single-responsibility)
   1. [Modules](#modules)
   1. [Controllers](#controllers)
-  1. [Factories](#factories)
   1. [Data Services](#data-services)
   1. [Directives](#directives)
-  1. [Resolving Promises](#route-resolve-promises)
   1. [Minification and Annotation](#minification-and-annotation)
-  1. [Exception Handling](#exception-handling)
   1. [Naming](#naming)
   1. [Application Structure LIFT Principle](#application-structure-lift-principle)
   1. [Application Structure](#application-structure)
   1. [Modularity](#modularity)
-  1. [Startup Logic](#startup-logic)
   1. [Angular $ Wrapper Services](#angular--wrapper-services)
   1. [Testing](#testing)
-  1. [Animations](#animations)
-  1. [Comments](#comments)
   1. [ESLint](#eslint)
   1. [Constants](#constants)
-  1. [File Templates and Snippets](#file-templates-and-snippets)
-  1. [Yeoman Generator](#yeoman-generator)
-  1. [Routing](#routing)
-  1. [Task Automation](#task-automation)
-  1. [Filters](#filters)
   1. [Angular Docs](#angular-docs)
   1. [Contributing](#contributing)
   1. [License](#license)
@@ -101,7 +90,7 @@ it is expected that the imported class was defined correctly, in another file, a
 
 ## Modules
 
-### ~~Avoid Naming Collisions~~
+### Avoid Naming Collisions
 ###### [Style [Y020](#style-y020)]
 
   - Use unique naming conventions with separators for sub-modules.
