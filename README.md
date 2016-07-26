@@ -71,10 +71,12 @@ it is expected that the imported class was defined correctly, in another file, a
   import { SomeController } from './some.controller';
   import { someFactory } from './some.factory';
   
-  angular
+  const app = angular
       .module('app', ['ngRoute'])
       .controller('SomeController', SomeController)
-      .factory('someFactory', someFactory);
+      .factory('someFactory', someFactory)
+      .name;
+  export app;
   ```
 
   ```javascript
@@ -99,205 +101,17 @@ it is expected that the imported class was defined correctly, in another file, a
 
 ## Modules
 
-### Avoid Naming Collisions
+### ~~Avoid Naming Collisions~~
 ###### [Style [Y020](#style-y020)]
 
   - Use unique naming conventions with separators for sub-modules.
 
   *Why?*: Unique names help avoid module name collisions. Separators help define modules and their submodule hierarchy. For example `app` may be your root module while `app.dashboard` and `app.users` may be modules that are used as dependencies of `app`.
 
-### Definitions (aka Setters)
-###### [Style [Y021](#style-y021)]
-
-  - Declare modules without a variable using the setter syntax.
-
-  *Why?*: With 1 component per file, there is rarely a need to introduce a variable for the module.
-
-  ```javascript
-  /* avoid */
-  const app = angular.module('app', [
-      'ngAnimate',
-      'ngRoute',
-      'app.shared',
-      'app.dashboard'
-  ]);
-  ```
-
-  Instead use the simple setter syntax.
-
-  ```javascript
-  /* recommended */
-  angular
-      .module('app', [
-          'ngAnimate',
-          'ngRoute',
-          'app.shared',
-          'app.dashboard'
-      ]);
-  ```
-
-### Getters
-###### [Style [Y022](#style-y022)]
-
-  - When using a module, avoid unnecessarily using variables and instead use chaining with the getter syntax.
-
-  *Why?*: This produces more readable code and avoids variable collisions or leaks.
-
-  ```javascript
-  /* avoid */
-  import { SomeController } from './some.controller';
-  
-  const app = angular.module('app');
-  app.controller('SomeController', SomeController);
-  ```
-
-  ```javascript
-  /* recommended */
-  import { SomeController } from './some.controller';
-  
-  angular
-      .module('app')
-      .controller('SomeController', SomeController);
-  ```
-
-### Setting vs Getting
-###### [Style [Y023](#style-y023)]
-
-  - Only set once and get for all other instances.
-
-  *Why?*: A module should only be created once, then retrieved from that point and after.
-
-  ```javascript
-  /* recommended */
-
-  // to set a module
-  angular.module('app', []);
-
-  // to get a module
-  angular.module('app');
-  ```
-
-### Named vs Anonymous Functions
-###### [Style [Y024](#style-y024)]
-
-  - Use named functions instead of passing an anonymous function in as a callback.
-
-  *Why?*: This produces more readable code, is much easier to debug, and reduces the amount of nested callback code.
-
-  ```javascript
-  /* avoid */
-  angular
-      .module('app')
-      .controller('Dashboard', () => { })
-  ```
-
-  ```javascript
-  /* recommended */
-  
-  // dashboard.controller.js
-
-  class Dashboard {
-    constructor() { }
-  }
-
-  // index.module.js
-  import { Dashboard } from './dashboard.controller';
-  
-  angular
-      .module('app')
-      .controller('Dashboard', Dashboard);
-  ```
 
 **[Back to top](#table-of-contents)**
 
 ## Controllers
-
-### controllerAs View Syntax
-###### [Style [Y030](#style-y030)]
-
-  - Use the [`controllerAs`](http://www.johnpapa.net/do-you-like-your-angular-controllers-with-or-without-sugar/) syntax over the `classic controller with $scope` syntax.
-
-  *Why?*: Controllers are constructed, "newed" up, and provide a single new instance, and the `controllerAs` syntax is closer to that of a JavaScript constructor than the `classic $scope syntax`.
-
-  *Why?*: It promotes the use of binding to a "dotted" object in the View (e.g. `customer.name` instead of `name`), which is more contextual, easier to read, and avoids any reference issues that may occur without "dotting".
-
-  *Why?*: Helps avoid using `$parent` calls in Views with nested controllers.
-
-  ```html
-  <!-- avoid -->
-  <div ng-controller="Customer">
-      {{name}}
-  </div>
-  ```
-
-  ```html
-  <!-- recommended -->
-  <div ng-controller="Customer as customer">
-      {{customer.name}}
-  </div>
-  ```
-  
-controllerAs can also be used in the router like so:
-
-```js
-.when('/dropbox', {
-        templateUrl: 'views/dropbox.html',
-        controller: 'DropboxCtrl',
-        controllerAs: 'dropbox'
-      })
-```
-
-### controllerAs Controller Syntax
-###### [Style [Y031](#style-y031)]
-
-  - Use the `controllerAs` syntax over the `classic controller with $scope` syntax.
-
-  - The `controllerAs` syntax uses `this` inside controllers which gets bound to `$scope`
-
-  *Why?*: `controllerAs` is syntactic sugar over `$scope`. You can still bind to the View and still access `$scope` methods.
-
-  *Why?*: Helps avoid the temptation of using `$scope` methods inside a controller when it may otherwise be better to avoid them or move the method to a factory, and reference them from the controller. Consider using `$scope` in a controller only when needed. For example when publishing and subscribing events using [`$emit`](https://docs.angularjs.org/api/ng/type/$rootScope.Scope#$emit), [`$broadcast`](https://docs.angularjs.org/api/ng/type/$rootScope.Scope#$broadcast), or [`$on`](https://docs.angularjs.org/api/ng/type/$rootScope.Scope#$on) consider moving these uses to a factory and invoke from the controller.
-
-  ```javascript
-  /* avoid */
-  class Customer { 
-    constructor($scope) {
-      $scope.name = {};
-      $scope.sendMessage = function() { };
-    }
-  }
-  ```
-
-  ```javascript
-  /* recommended - but see next section */
-  class Customer {
-    constructor() {
-      this.name = {};
-    }
-    sendMessage(){ }
-  }
-  ```
-
-### controllerAs with fat arrows
-###### [Style [Y032](#style-y032)]
-
-  - Using a capture variable for `this` when using the `controllerAs` syntax, is not necessary with ES6. You can simply use a fat arrow to automatically reference the correct `this` context
-
-
-  ```javascript
-  /* avoid */
-  let self = this;
-  () => {
-    self.foo = 'bar';
-  }
-  ```
-
-  ```javascript
-  /* recommended */
-  () => {
-    this.foo = 'bar';
-  }
-  ```
 
 ### Defer Controller Logic to Services
 ###### [Style [Y035](#style-y035)]
@@ -364,79 +178,9 @@ controllerAs can also be used in the router like so:
 
     *Why?*: Reusing controllers with several views is brittle and good end-to-end (e2e) test coverage is required to ensure stability across large applications.
 
-### Assigning Controllers
-###### [Style [Y038](#style-y038)]
-
-  - When a controller must be paired with a view and either component may be re-used by other controllers or views, define controllers along with their routes.
-
-    Note: If a View is loaded via another means besides a route, then use the `ng-controller="AvengersController as avengers"` syntax.
-
-    *Why?*: Pairing the controller in the route allows different routes to invoke different pairs of controllers and views. When controllers are assigned in the view using [`ng-controller`](https://docs.angularjs.org/api/ng/directive/ngController), that view is always associated with the same controller.
-
- ```javascript
-  /* avoid - when using with a route and dynamic pairing is desired */
-
-  // route-config.js
-  angular
-      .module('app')
-      .config(config);
-
-  function config($routeProvider) {
-      $routeProvider
-          .when('/avengers', {
-            templateUrl: 'avengers.html'
-          });
-  }
-  ```
-
-  ```html
-  <!-- avengers.html -->
-  <div ng-controller="AvengersController as avengers">
-  </div>
-  ```
-
-  ```javascript
-  /* recommended */
-
-  // route-config.js
-  angular
-      .module('app')
-      .config(config);
-
-  function config($routeProvider) {
-      $routeProvider
-          .when('/avengers', {
-              templateUrl: 'avengers.html',
-              controller: 'AvengersController',
-              controllerAs: 'avengers'
-          });
-  }
-  ```
-
-  ```html
-  <!-- avengers.html -->
-  <div>
-  </div>
-  ```
 
 **[Back to top](#table-of-contents)**
 
-
-## Factories
-
-### Single Responsibility
-###### [Style [Y050](#style-y050)]
-
-  - Factories should have a [single responsibility](http://en.wikipedia.org/wiki/Single_responsibility_principle), that is encapsulated by its context. Once a factory begins to exceed that singular purpose, a new factory should be created.
-
-### Singletons
-###### [Style [Y051](#style-y051)]
-
-  - Factories are singletons and return an object that contains the members of the service.
-
-    Note: [All Angular services are singletons](https://docs.angularjs.org/guide/services).
-
-**[Back to top](#table-of-contents)**
 
 ## Data Services
 
@@ -455,9 +199,10 @@ controllerAs can also be used in the router like so:
   /* recommended */
 
   // dataservice factory
-  angular
+  const appCore = angular
       .module('app.core')
-      .factory('dataservice', dataservice);
+      .factory('dataservice', dataservice)
+      .name;
 
   class dataservice { 
     constructor($http, logger) {
@@ -478,6 +223,8 @@ controllerAs can also be used in the router like so:
       }
     }
   }
+  
+  export default appCore;
   ```
 
 ### Return a Promise from Data Calls
@@ -617,16 +364,14 @@ controllerAs can also be used in the router like so:
 
     Note: Avoid `ng-` as these are reserved for Angular directives. Research widely used directives to avoid naming conflicts, such as `ion-` for the [Ionic Framework](http://ionicframework.com/).
 
-### Restrict to Elements and Attributes
+### Restrict to Attributes
 ###### [Style [Y074](#style-y074)]
 
-  - When creating a directive that makes sense as a stand-alone element, allow restrict `E` (custom element) and optionally restrict `A` (custom attribute). Generally, if it could be its own control, `E` is appropriate. General guideline is allow `EA` but lean towards implementing as an element when it's stand-alone and as an attribute when it enhances its existing DOM element.
+  - When creating a directive then restrict it to `A`!!! (custom attribute). 
 
     *Why?*: It makes sense.
 
-    *Why?*: While we can allow the directive to be used as a class, if the directive is truly acting as an element it makes more sense as an element or at least as an attribute.
-
-    Note: EA is the default for Angular 1.3 +
+    Note: A is the default for Angular 1.3 +
 
   ```html
   <!-- avoid -->
@@ -650,7 +395,6 @@ controllerAs can also be used in the router like so:
 
   ```html
   <!-- recommended -->
-  <my-calendar-range></my-calendar-range>
   <div my-calendar-range></div>
   ```
 
@@ -661,126 +405,12 @@ controllerAs can also be used in the router like so:
     constructor() {
       this.link = this.linkFunc;
       this.templateUrl = '/template/is/located/here.html';
-      this.restrict = 'EA';
+      this.restrict = 'A';
     }
     linkFunc(scope, element, attrs) {
       /* */
     }
   }
-  ```
-
-### Directives and ControllerAs
-###### [Style [Y075](#style-y075)]
-
-  - Use `controller as` syntax with a directive to be consistent with using `controller as` with view and controller pairings.
-
-    *Why?*: It makes sense and it's not difficult.
-
-    Note: The directive below demonstrates some of the ways you can use scope inside of link and directive controllers, using controllerAs. I in-lined the template just to keep it all in one place.
-
-    Note: Note that the directive's controller is outside the directive's closure. This style eliminates issues where the injection gets created as unreachable code after a `return`.
-
-  ```html
-  <div my-example max="77"></div>
-  ```
-  
-  ```js
- //myExample.directive.js
- class ExampleController { 
-    constructor($scope) {
-      // Injecting $scope just for comparison
-     
-      this.min = 3;
-
-      console.log('CTRL: $scope.example.min = %s', $scope.example.min);
-      console.log('CTRL: $scope.example.max = %s', $scope.example.max);
-      console.log('CTRL: this.min = %s', this.min);
-      console.log('CTRL: this.max = %s', this.max);
-    }
-  }
-
-  class myExample {
-    constructor() {
-      this.restrict = 'EA';
-      this.templateUrl = 'app/feature/example.directive.html';
-      this.scope = {
-        max: '='
-      };
-      this.link = this.linkFunc;
-      this.controller = ExampleController;
-      this.controllerAs = 'example';
-      this.bindToController = true; // because the scope is isolated
-    }
-    linkFunc(scope, el, attr, ctrl) {
-      console.log('LINK: scope.min = %s *** should be undefined', scope.min);
-      console.log('LINK: scope.max = %s *** should be undefined', scope.max);
-      console.log('LINK: scope.example.min = %s', scope.example.min);
-      console.log('LINK: scope.example.max = %s', scope.example.max);
-    }
-  }
-  ```
-
-  ```html
-  <!-- example.directive.html -->
-  <div>hello world</div>
-  <div>max={{example.max}}<input ng-model="example.max"/></div>
-  <div>min={{example.min}}<input ng-model="example.min"/></div>
-  ```
-
-    Note: You can also name the controller when you inject it into the link function and access directive attributes as properties of the controller.
-
-  ```javascript
-  // Alternative to above example
-  linkFunc(scope, el, attr, example) {
-    console.log('LINK: scope.min = %s *** should be undefined', scope.min);
-    console.log('LINK: scope.max = %s *** should be undefined', scope.max);
-    console.log('LINK: example.min = %s', example.min);
-    console.log('LINK: example.max = %s', example.max);
-  }
-  ```
-
-###### [Style [Y076](#style-y076)]
-
-  - Use `bindToController = true` when using `controller as` syntax with a directive when you want to bind the outer scope to the directive's controller's scope.
-
-    *Why?*: It makes it easy to bind outer scope to the directive's controller scope.
-
-    Note: `bindToController` was introduced in Angular 1.3.0.
-
-  ```html
-  <div my-example max="77"></div>
-  ```
-
-  ```javascript
-  //myExample.directive.js
-   class ExampleController { 
-    constructor() {
-      this.min = 3;
-      console.log('CTRL: this.min = %s', this.min);
-      console.log('CTRL: this.max = %s', this.max);
-    }
-  }
-
-  class myExample { 
-    constructor() { 
-      this.restrict = 'EA';
-      this.templateUrl = 'app/feature/example.directive.html';
-      this.scope = {
-        max: '='
-      };
-      this.link = this.linkFunc;
-      this.controller = ExampleController;
-      this.controllerAs = 'example';
-      this.bindToController = true;
-    }
-  }
-  ```
-
-  ```html
-  <!-- example.directive.html -->
-  <div>hello world</div>
-  <div>max={{example.max}}<input ng-model="example.max"/></div>
-  <div>min={{example.min}}<input ng-model="example.min"/></div>
   ```
 
 **[Back to top](#table-of-contents)**
@@ -886,8 +516,9 @@ controllerAs can also be used in the router like so:
 
     ```javascript
     class Avengers { 
+      /** @ngInject */
       constructor(storage, avengerService) {
-        'ngInject';
+        
       
         this.heroSearch = '';
         
@@ -925,115 +556,6 @@ controllerAs can also be used in the router like so:
 
 **[Back to top](#table-of-contents)**
 
-## Exception Handling
-
-### decorators
-###### [Style [Y110](#style-y110)]
-
-  - Use a [decorator](https://docs.angularjs.org/api/auto/service/$provide#decorator), at config time using the [`$provide`](https://docs.angularjs.org/api/auto/service/$provide) service, on the [`$exceptionHandler`](https://docs.angularjs.org/api/ng/service/$exceptionHandler) service to perform custom actions when exceptions occur.
-
-    *Why?*: Provides a consistent way to handle uncaught Angular exceptions for development-time or run-time.
-
-    Note: Another option is to override the service instead of using a decorator. This is a fine option, but if you want to keep the default behavior and extend it a decorator is recommended.
-
-    ```javascript
-    /* recommended */
-
-    function exceptionConfig($provide) {
-      'ngInject';
-      $provide.decorator('$exceptionHandler', extendExceptionHandler);
-    }
-
-
-    function extendExceptionHandler($delegate, toastr) {
-      'ngInject';
-      return function(exception, cause) {
-        $delegate(exception, cause);
-        let errorData = {
-          exception: exception,
-          cause: cause
-        };
-        /**
-         * Could add the error to a service's collection,
-         * add errors to $rootScope, log errors to remote web server,
-         * or log locally. Or throw hard. It is entirely up to you.
-         * throw exception;
-         */
-        toastr.error(exception.msg, errorData);
-      };
-    }
-    ```
-
-### Exception Catchers
-###### [Style [Y111](#style-y111)]
-
-  - Create a factory that exposes an interface to catch and gracefully handle exceptions.
-
-    *Why?*: Provides a consistent way to catch exceptions that may be thrown in your code (e.g. during XHR calls or promise failures).
-
-    Note: The exception catcher is good for catching and reacting to specific exceptions from calls that you know may throw one. For example, when making an XHR call to retrieve data from a remote web service and you want to catch any exceptions from that service and react uniquely.
-
-    ```javascript
-    /* recommended */
-
-    class exception {
-      constructor(logger) {
-        'ngInject';
-        this.logger = logger;
-      }
-      catcher(message) {
-        return (reason) => {
-          this.logger.error(message, reason);
-        };
-      }
-    }
-    ```
-
-### Route Errors
-###### [Style [Y112](#style-y112)]
-
-  - Handle and log all routing errors using [`$routeChangeError`](https://docs.angularjs.org/api/ngRoute/service/$route#$routeChangeError).
-
-    *Why?*: Provides a consistent way to handle all routing errors.
-
-    *Why?*: Potentially provides a better user experience if a routing error occurs and you route them to a friendly screen with more details or recovery options.
-
-    ```javascript
-    /* recommended */
-    let handlingRouteChangeError = false;
-
-    function handleRoutingErrors() {
-        /**
-         * Route cancellation:
-         * On routing error, go to the dashboard.
-         * Provide an exit clause if it tries to do it twice.
-         */
-        $rootScope.$on('$routeChangeError',
-            function(event, current, previous, rejection) {
-                if (handlingRouteChangeError) { return; }
-                handlingRouteChangeError = true;
-                let destination = (current && (current.title ||
-                    current.name || current.loadedTemplateUrl)) ||
-                    'unknown target';
-                let msg = 'Error routing to ' + destination + '. ' +
-                    (rejection.msg || '');
-
-                /**
-                 * Optionally log using a custom service or $log.
-                 * (Don't forget to inject custom service)
-                 */
-                logger.warning(msg, [current]);
-
-                /**
-                 * On routing error, go to another route/state.
-                 */
-                $location.path('/');
-
-            }
-        );
-    }
-    ```
-
 **[Back to top](#table-of-contents)**
 
 ## Naming
@@ -1060,28 +582,15 @@ controllerAs can also be used in the router like so:
 
     ```javascript
     /**
-     * common options
-     */
-
-    // Controllers
-    avengers.js
-    avengers.controller.js
-    avengersController.js
-
-    // Services/Factories
-    logger.js
-    logger.service.js
-    loggerService.js
-    ```
-
-    ```javascript
-    /**
      * recommended
      */
 
+    // modules
+    avengers.module.js
+
     // controllers
-    avengers.controller.js
-    avengers.controller.spec.js
+    avengers.js
+    avengers.spec.js
 
     // services/factories
     logger.service.js
@@ -1090,30 +599,12 @@ controllerAs can also be used in the router like so:
     // constants
     constants.js
 
-    // module definition
-    avengers.module.js
-
-    // routes
-    avengers.routes.js
-    avengers.routes.spec.js
-
     // configuration
     avengers.config.js
 
     // directives
     avenger-profile.directive.js
     avenger-profile.directive.spec.js
-    ```
-
-  Note: Another common convention is naming controller files without the word `controller` in the file name such as `avengers.js` instead of `avengers.controller.js`. All other conventions still hold using a suffix of the type. Controllers are the most common type of component so this just saves typing and is still easily identifiable. I recommend you choose 1 convention and be consistent for your team. My preference is `avengers.controller.js`.
-
-    ```javascript
-    /**
-     * recommended
-     */
-    // Controllers
-    avengers.js
-    avengers.spec.js
     ```
 
 ### Test File Names
@@ -1129,7 +620,7 @@ controllerAs can also be used in the router like so:
     /**
      * recommended
      */
-    avengers.controller.spec.js
+    avengers.spec.js
     logger.service.spec.js
     avengers.routes.spec.js
     avenger-profile.directive.spec.js
@@ -1232,10 +723,12 @@ controllerAs can also be used in the router like so:
 
     // avenger-profile.directive.js
 
-    // usage is <xx-avenger-profile> </xx-avenger-profile>
+    // usage is <div xx-avenger-profile> </div>
 
     class xxAvengerProfile {
-      constructor() { }
+      constructor() {
+        this.restrict = 'A';
+      }
     }
     ```
 
@@ -1247,22 +740,6 @@ controllerAs can also be used in the router like so:
     *Why?*: Provides consistency for multiple module apps, and for expanding to large applications.
 
     *Why?*: Provides easy way to use task automation to load all module definitions first, then all other angular files (for bundling).
-
-### Configuration
-###### [Style [Y128](#style-y128)]
-
-  - Separate configuration for a module into its own file named after the module. A configuration file for the main `app` module is named `app.config.js` (or simply `config.js`). A configuration for a module named `admin.module.js` is named `admin.config.js`.
-
-    *Why?*: Separates configuration from module definition, components, and active code.
-
-    *Why?*: Provides an identifiable place to set configuration for a module.
-
-### Routes
-###### [Style [Y129](#style-y129)]
-
-  - Separate route configuration into its own file. Examples might be `app.route.js` for the main module and `admin.route.js` for the `admin` module. Even in smaller apps I prefer this separation from the rest of the configuration.
-
-**[Back to top](#table-of-contents)**
 
 ## Application Structure LIFT Principle
 ### LIFT
@@ -1287,8 +764,14 @@ controllerAs can also be used in the router like so:
     *Why?*: I find this to be super important for a project. If the team cannot find the files they need to work on quickly, they will not be able to work as efficiently as possible, and the structure needs to change. You may not know the file name or where its related files are, so putting them in the most intuitive locations and near each other saves a ton of time. A descriptive folder structure can help with this.
 
     ```
-    /bower_components
-    /client
+    /jspm_packages
+    /node_modules
+    /build
+    /dist
+    /server
+    /src
+      /assets
+      /core
       /app
         /avengers
         /blocks
@@ -1355,78 +838,56 @@ controllerAs can also be used in the router like so:
      * recommended
      */
 
-    app/
+    src/
+        app/
+            calendar/
+                list/
+                    calendar-list.js
+                    calendar-list.tpl.html
+                    calendar-list.module.js
+                details/
+                    calendar-details.js
+                    calendar-details.tpl.html
+                    calendar-details.module.js
+                calendar.module.js
         app.module.js
         app.config.js
-        components/
-            calendar.directive.js
-            calendar.directive.html
-            user-profile.directive.js
-            user-profile.directive.html
-        people/
-            attendees.html
-            attendees.controller.js
-            people.routes.js
-            speakers.html
-            speakers.controller.js
-            speaker-detail.html
-            speaker-detail.controller.js
+        app.run.js
+      core/
+        resources/
+            users/
+                users.js
+                users.spec.js
+                users.module.js
+            resources.module.js
         services/
-            data.service.js
-            localstorage.service.js
-            logger.service.js
-            spinner.service.js
-        sessions/
-            sessions.html
-            sessions.controller.js
-            sessions.routes.js
-            session-detail.html
-            session-detail.controller.js
+            users/
+                users.spec.js
+                users.js
+                users.module.js
+            services.module.js
+        components/
+            tables/
+                tables.html
+                tables.js
+                tables.module.js
+            filters/
+                simple/
+                    simple.html
+                    simple.js
+                    simple.module.js
+                advanced/
+                    advanced.html
+                    advanced.js
+                    advanced.module.js
+                filters.module.js
+            components.module.js
+        core.module.js
     ```
 
       ![Sample App Structure](https://raw.githubusercontent.com/rwwagner90/angular-styleguide/master/assets/modularity-2.png)
 
       Note: Do not structure your app using folders-by-type. This requires moving to multiple folders when working on a feature and gets unwieldy quickly as the app grows to 5, 10 or 25+ views and controllers (and other features), which makes it more difficult than folder-by-feature to locate files.
-
-    ```javascript
-    /*
-    * avoid
-    * Alternative folders-by-type.
-    * I recommend "folders-by-feature", instead.
-    */
-
-    app/
-        app.module.js
-        app.config.js
-        app.routes.js
-        directives.js
-        controllers/
-            attendees.js
-            session-detail.js
-            sessions.js
-            shell.js
-            speakers.js
-            speaker-detail.js
-            topnav.js
-        directives/
-            calendar.directive.js
-            calendar.directive.html
-            user-profile.directive.js
-            user-profile.directive.html
-        services/
-            dataservice.js
-            localstorage.js
-            logger.js
-            spinner.js
-        views/
-            attendees.html
-            session-detail.html
-            sessions.html
-            shell.html
-            speakers.html
-            speaker-detail.html
-            topnav.html
-    ```
 
 **[Back to top](#table-of-contents)**
 
@@ -1491,29 +952,6 @@ controllerAs can also be used in the router like so:
     > My structures vary slightly between projects but they all follow these guidelines for structure and modularity. The implementation may vary depending on the features and the team. In other words, don't get hung up on an exact like-for-like structure but do justify your structure using consistency, maintainability, and efficiency in mind.
 
     > In a small app, you can also consider putting all the shared dependencies in the app module where the feature modules have no direct dependencies. This makes it easier to maintain the smaller application, but makes it harder to reuse modules outside of this application.
-
-**[Back to top](#table-of-contents)**
-
-## Startup Logic
-
-### Run Blocks
-###### [Style [Y171](#style-y171)]
-
-  - Any code that needs to run when an application starts should be declared in a factory, exposed via a function, and injected into the [run block](https://docs.angularjs.org/guide/module#module-loading-dependencies).
-
-    *Why?*: Code directly in a run block can be difficult to test. Placing in a factory makes it easier to abstract and mock.
-
-  ```javascript
-  angular
-      .module('app')
-      .run(runBlock);
-
-  function runBlock(authenticator, translator) {
-    'ngInject';
-    authenticator.initialize();
-    translator.initialize();
-  }
-  ```
 
 **[Back to top](#table-of-contents)**
 
@@ -1636,13 +1074,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 ### Stubbing and Spying
 ###### [Style [Y193](#style-y193)]
 
-  - Use [Sinon](http://sinonjs.org/) for stubbing and spying.
-
-    *Why?*: Sinon works well with both Jasmine and Mocha and extends the stubbing and spying features they offer.
-
-    *Why?*: Sinon makes it easier to toggle between Jasmine and Mocha, if you want to try both.
-
-    *Why?*: Sinon has descriptive messages when tests fail the assertions.
+  - Use [Jasmine] for stubbing and spying.
 
 ### Headless Browser
 ###### [Style [Y194](#style-y194)]
@@ -1689,90 +1121,6 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## Animations
-
-### Usage
-###### [Style [Y210](#style-y210)]
-
-  - Use subtle [animations with Angular](https://docs.angularjs.org/guide/animations) to transition between states for views and primary visual elements. Include the [ngAnimate module](https://docs.angularjs.org/api/ngAnimate). The 3 keys are subtle, smooth, seamless.
-
-    *Why?*: Subtle animations can improve User Experience when used appropriately.
-
-    *Why?*: Subtle animations can improve perceived performance as views transition.
-
-### Sub Second
-###### [Style [Y211](#style-y211)]
-
-  - Use short durations for animations. I generally start with 300ms and adjust until appropriate.
-
-    *Why?*: Long animations can have the reverse affect on User Experience and perceived performance by giving the appearance of a slow application.
-
-### animate.css
-###### [Style [Y212](#style-y212)]
-
-  - Use [animate.css](http://daneden.github.io/animate.css/) for conventional animations.
-
-    *Why?*: The animations that animate.css provides are fast, smooth, and easy to add to your application.
-
-    *Why?*: Provides consistency in your animations.
-
-    *Why?*: animate.css is widely used and tested.
-
-    Note: See this [great post by Matias Niemelä on Angular animations](http://www.yearofmoo.com/2013/08/remastered-animation-in-angularjs-1-2.html)
-
-**[Back to top](#table-of-contents)**
-
-## Comments
-
-### jsDoc
-###### [Style [Y220](#style-y220)]
-
-  - If planning to produce documentation, use [`jsDoc`](http://usejsdoc.org/) syntax to document function names, description, params and returns. Use `@namespace` and `@memberOf` to match your app structure.
-
-    *Why?*: You can generate (and regenerate) documentation from your code, instead of writing it from scratch.
-
-    *Why?*: Provides consistency using a common industry tool.
-
-    ```javascript
-    /**
-     * Logger Factory
-     * @namespace Factories
-     */
-    (function() {
-      angular
-          .module('app')
-          .factory('logger', logger);
-
-      /**
-       * @namespace Logger
-       * @desc Application wide logger
-       * @memberOf Factories
-       */
-      function logger($log) {
-          var service = {
-             logError: logError
-          };
-          return service;
-
-          ////////////
-
-          /**
-           * @name logError
-           * @desc Logs errors
-           * @param {String} msg Message to log
-           * @returns {String}
-           * @memberOf Factories.Logger
-           */
-          function logError(msg) {
-              var loggedMsg = 'Error: ' + msg;
-              $log.error(loggedMsg);
-              return loggedMsg;
-          };
-      }
-    })();
-    ```
-
-**[Back to top](#table-of-contents)**
 
 ## ESLint
 
@@ -1885,171 +1233,18 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
     ```javascript
     // Constants used by the entire app
-    angular
+    const appCore = angular
         .module('app.core')
         .constant('moment', moment);
 
     // Constants used only by the sales module
-    angular
+    const appSales = angular
         .module('app.sales')
         .constant('events', {
             ORDER_CREATED: 'event_order_created',
             INVENTORY_DEPLETED: 'event_inventory_depleted'
         });
     ```
-
-**[Back to top](#table-of-contents)**
-
-
-## Yeoman Generator
-###### [Style [Y260](#style-y260)]
-
-You can use the [generator-gulp-angular](https://github.com/Swiip/generator-gulp-angular) to create an app that serves as a starting point for Angular that follows this style guide.
-
-1. Install generator-gulp-angular
-
-  ```
-  npm install -g generator-gulp-angular
-  ```
-
-2. Create a new folder and change directory to it
-
-  ```
-  mkdir myapp
-  cd myapp
-  ```
-
-3. Run the generator
-
-  ```
-  yo gulp-angular
-  ```
-
-**[Back to top](#table-of-contents)**
-
-## Routing
-Client-side routing is important for creating a navigation flow between views and composing views that are made of many smaller templates and directives.
-
-###### [Style [Y270](#style-y270)]
-
-  - Use the [AngularUI Router](http://angular-ui.github.io/ui-router/) for client-side routing.
-
-    *Why?*: UI Router offers all the features of the Angular router plus a few additional ones including nested routes and states.
-
-    *Why?*: The syntax is quite similar to the Angular router and is easy to migrate to UI Router.
-
-  - Note: You can use a provider such as the `routerHelperProvider` shown below to help configure states across files, during the run phase.
-
-    ```javascript
-    // customers.routes.js
-    angular
-        .module('app.customers')
-        .run(appRun);
-
-    
-    function appRun(routerHelper) {
-      'ngInject';
-      routerHelper.configureStates(getStates());
-    }
-
-    function getStates() {
-        return [
-            {
-                state: 'customer',
-                config: {
-                    abstract: true,
-                    template: '<ui-view class="shuffle-animation"/>',
-                    url: '/customer'
-                }
-            }
-        ];
-    }
-    ```
-
-    ```javascript
-    // routerHelperProvider.js
-    angular
-        .module('blocks.router')
-        .provider('routerHelper', routerHelperProvider);
-
-    
-    function routerHelperProvider($locationProvider, $stateProvider, $urlRouterProvider) {
-      'ngInject';
-      /* jshint validthis:true */
-      this.$get = RouterHelper;
-
-      $locationProvider.html5Mode(true);
-      function RouterHelper($state) {
-        'ngInject';
-        var hasOtherwise = false;
-        var service = {
-          configureStates: configureStates,
-          getStates: getStates
-        };
-
-        return service;
-
-        ///////////////
-
-        function configureStates(states, otherwisePath) {
-          states.forEach((state) => {
-            $stateProvider.state(state.state, state.config);
-          });
-          if (otherwisePath && !hasOtherwise) {
-            hasOtherwise = true;
-            $urlRouterProvider.otherwise(otherwisePath);
-          }
-        }
-
-        function getStates() { return $state.get(); }
-      }
-    }
-    ```
-
-###### [Style [Y271](#style-y271)]
-
-  - Define routes for views in the module where they exist. Each module should contain the routes for the views in the module.
-
-    *Why?*: Each module should be able to stand on its own.
-
-    *Why?*: When removing a module or adding a module, the app will only contain routes that point to existing views.
-
-    *Why?*: This makes it easy to enable or disable portions of an application without concern over orphaned routes.
-
-**[Back to top](#table-of-contents)**
-
-## Task Automation
-Use [Gulp](http://gulpjs.com) or [Grunt](http://gruntjs.com) for creating automated tasks.  Gulp leans to code over configuration while Grunt leans to configuration over code. I personally prefer Gulp as I feel it is easier to read and write, but both are excellent.
-
-> Learn more about gulp and patterns for task automation in my [Gulp Pluralsight course](http://jpapa.me/gulpps)
-
-###### [Style [Y400](#style-y400)]
-
-  - Use task automation to list module definition files `*.module.js` before all other application JavaScript files.
-
-    *Why?*: Angular needs the module definitions to be registered before they are used.
-
-    *Why?*: Naming modules with a specific pattern such as `*.module.js` makes it easy to grab them with a glob and list them first.
-
-    ```javascript
-    var clientApp = './src/client/app/';
-
-    // Always grab module files first
-    var files = [
-      clientApp + '**/*.module.js',
-      clientApp + '**/*.js'
-    ];
-    ```
-
-**[Back to top](#table-of-contents)**
-
-## Filters
-
-###### [Style [Y420](#style-y420)]
-
-  - Avoid using filters for scanning all properties of a complex object graph. Use filters for select properties.
-
-    *Why?*: Filters can easily be abused and negatively affect performance if not used wisely, for example when a filter hits a large and deep object graph.
 
 **[Back to top](#table-of-contents)**
 
